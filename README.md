@@ -1,18 +1,23 @@
 # annotator.nvim
 
-Lightweight Neovim annotations for lines and ranges, with typed comments,
-suggestions, deletion marks, labels, optional persistence, and export hooks.
+Make annotations without leaving Neovim. Use `annotator.nvim` to leave
+comments, rejection/approval marks, labels or suggest rewrites as you work.
+When you are ready, hand off batches of annotations to LLMs or export
+elsewhere. Annotations are exported as structured Markdown by default, but they
+can be configured via templates.
 
-No required external dependencies. If Snacks is installed, `:AnnotatorList`
-uses its picker; otherwise it falls back to Neovim quickfix.
+## Demo
 
-Use it when you want to leave temporary notes on code or prose without editing
-the file: review comments, suggested rewrites, deletion marks, writing labels,
-debugging breadcrumbs, refactor reminders, reading notes, or a small batch of
-observations to export somewhere else.
+https://github.com/user-attachments/assets/36310a11-6ce9-4da3-ba0b-e23d982fba87
 
-Annotations are kept in memory by default. If you opt into state-backed storage,
-unexported annotations are written to Neovim state and restored on restart.
+## Features
+
+- Annotate lines and ranges with typed comments, suggestions, deletion marks,
+  labels, optional persistence, and export hooks.
+- No required external dependencies. If Snacks is installed, `:AnnotatorList`
+  uses its picker; otherwise it falls back to Neovim quickfix.
+- Keep annotations in memory by default, or opt into state-backed storage to
+  restore unexported annotations on restart.
 
 ## Example
 
