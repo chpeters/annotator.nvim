@@ -19,40 +19,53 @@ https://github.com/user-attachments/assets/36310a11-6ce9-4da3-ba0b-e23d982fba87
 - Keep annotations in memory by default, or opt into state-backed storage to
   restore unexported annotations on restart.
 
+## Install
+
+With `vim.pack`:
+```lua
+vim.pack.add({
+  { src = "https://github.com/chpeters/annotator.nvim" },
+})
+
+require("annotator").setup()
+```
+
+With `lazy.nvim`:
+```lua
+{
+  "chpeters/annotator.nvim",
+  opts = {},
+}
+```
+
 ## Example
 
 Annotate the current line:
-
 ```vim
 :AnnotatorAdd
 ```
 
 Suggest a replacement for a range:
-
 ```vim
 :12,16AnnotatorSuggest
 ```
 
 Mark a line for deletion:
-
 ```vim
 :AnnotatorMarkDelete
 ```
 
 Annotate a visual selection with the default mapping:
-
 ```vim
 <leader>aa
 ```
 
 Then export everything:
-
 ```vim
 :AnnotatorExport
 ```
 
 By default, export copies Markdown like this to the system clipboard:
-
 ````markdown
 Neovim annotations:
 
@@ -80,43 +93,9 @@ The default exporter clears annotations after copying them.
   back to `pbcopy`. On Linux or Windows, configure a Neovim clipboard provider
   or replace `hooks.export`.
 
-## Install
-
-With `vim.pack`:
-
-```lua
-vim.pack.add({
-  { src = "https://github.com/chpeters/annotator.nvim" },
-})
-
-require("annotator").setup()
-```
-
-With `lazy.nvim`:
-
-```lua
-{
-  "chpeters/annotator.nvim",
-  opts = {},
-}
-```
-
-With another plugin manager, install `chpeters/annotator.nvim` and call:
-
-```lua
-require("annotator").setup()
-```
-
-Generate help tags if your plugin manager does not do it for you:
-
-```vim
-:helptags ALL
-```
-
 ## Configuration
 
 Default configuration:
-
 ```lua
 require("annotator").setup({
   mappings = true,
@@ -151,7 +130,6 @@ require("annotator").setup({
 ```
 
 Options:
-
 - `mappings`: set to `false` to skip default mappings.
 - `storage`: `"memory"` by default, or `"state"` to persist unexported annotations.
 - `storage_path`: optional path override for `"state"` storage.
@@ -162,7 +140,6 @@ Options:
 - `hooks.export(ctx)`: function called by `:AnnotatorExport`.
 
 State storage defaults to:
-
 ```text
 stdpath("state")/annotator.nvim/annotations.json
 ```
@@ -171,7 +148,6 @@ State-backed storage writes only portable annotation fields. Neovim buffer IDs
 and extmark IDs are recreated for open buffers and are not persisted.
 
 Example display tweak:
-
 ```lua
 require("annotator").setup({
   display = {
@@ -201,7 +177,6 @@ require("annotator").setup({
 ```
 
 Provide `hooks.export(ctx)` to integrate with your own workflow:
-
 ```lua
 require("annotator").setup({
   hooks = {
@@ -264,48 +239,6 @@ annotations.export()
 annotations.clear()
 ```
 
-## Lua Types
-
-annotator.nvim includes LuaLS annotations for its public surface:
-
-- `AnnotatorConfig`
-- `AnnotatorDisplayConfig`
-- `AnnotatorDisplayKindConfig`
-- `AnnotatorLabel`
-- `AnnotatorAnnotation`
-- `AnnotatorFormatterContext`
-- `AnnotatorExportContext`
-- `AnnotatorExporters`
-
-Example:
-
-```lua
----@type AnnotatorConfig
-local opts = {
-  storage = "state",
-  labels = {
-    { id = "clarify", title = "Clarify", comment = "Please clarify this point." },
-  },
-}
-
-require("annotator").setup(opts)
-```
-
-## Health
-
-```vim
-:checkhealth annotator
-```
-
-This checks the Neovim version, input support, clipboard support for the default
-exporter, optional Snacks picker availability, and optional state storage path.
-
-Help is available with:
-
-```vim
-:help annotator
-```
-
 ## Behavior
 
 - Adding on a line with an existing comment annotation edits that annotation
@@ -321,15 +254,6 @@ Help is available with:
   the label picker.
 - `:AnnotatorList` uses Snacks picker when available and falls back to quickfix.
 - The default exporter copies Markdown to the system clipboard.
-
-## Development
-
-```sh
-nvim --headless -u tests/minimal_init.lua +qa
-nvim --headless -u tests/minimal_init.lua -S tests/smoke.lua +qa
-nvim --headless -u tests/minimal_init.lua -S tests/storage.lua +qa
-nvim --headless -u tests/minimal_init.lua '+checkhealth annotator' +qa
-```
 
 ## License
 
