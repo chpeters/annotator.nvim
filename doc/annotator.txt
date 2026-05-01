@@ -1,0 +1,228 @@
+*annotator.txt* Lightweight line and range annotations
+
+==============================================================================
+CONTENTS                                                   *annotator-contents*
+
+1. Introduction                                             |annotator|
+2. Commands                                                 |annotator-commands|
+3. Configuration                                            |annotator-configuration|
+4. Export hooks                                             |annotator-export-hooks|
+5. Lua API                                                  |annotator-lua-api|
+6. Lua types                                                |annotator-lua-types|
+7. Health                                                   |annotator-health|
+
+==============================================================================
+INTRODUCTION                                                *annotator*
+
+annotator.nvim keeps temporary typed annotations on lines and ranges without
+editing the file. It is useful for review notes, suggested rewrites, deletion
+marks, writing labels, debugging breadcrumbs, refactor reminders, reading
+notes, or any workflow that wants a batch of notes exported as Markdown.
+
+Annotations are memory-only by default. Optional state storage writes portable
+JSON under: >
+
+  stdpath("state")/annotator.nvim/annotations.json
+<
+
+==============================================================================
+COMMANDS                                                    *annotator-commands*
+
+*:AnnotatorAdd*
+  Add an annotation for the current line or command range. When run on a line
+  already covered by a comment annotation, edits that annotation instead.
+
+*:AnnotatorSuggest*
+  Open a floating scratch buffer to edit replacement text for the current line
+  or command range. The buffer is prefilled with the selected text. In normal
+  mode, <CR> or <C-s> saves and q cancels.
+
+*:AnnotatorMarkDelete*
+  Immediately mark the current line or command range for removal.
+
+*:AnnotatorLabel*
+  Pick a configured label for the current line or command range with
+  vim.ui.select().
+
+*:AnnotatorEdit*
+  Edit the annotation covering the cursor line. Comments and deletion marks use
+  vim.ui.input(), suggestions reopen the replacement editor, and labels reopen
+  the label picker.
+
+*:AnnotatorDelete*
+  Delete the annotation covering the cursor line.
+
+*:AnnotatorList*
+  Browse pending annotations. Uses Snacks picker when available, otherwise
+  falls back to quickfix.
+
+*:AnnotatorExport*
+  Run the configured export hook.
+
+*:AnnotatorClear*
+  Clear all pending annotations.
+
+Default mappings: >
+
+  normal <leader>aa   add or edit the current-line annotation
+  visual <leader>aa   annotate the selected lines
+  normal <leader>ax   export annotations
+<
+
+Typed commands do not define default mappings.
+
+==============================================================================
+CONFIGURATION                                           *annotator-configuration*
+
+Default setup: >
+
+  require("annotator").setup({
+    mappings = true,
+    storage = "memory",
+    display = {
+      sign_text = "A>",
+      sign_hl_group = "AnnotatorAnnotationSign",
+      virtual_text_prefix = " Annotation: ",
+      virtual_text_hl_group = "AnnotatorAnnotationVirtual",
+      virtual_text_pos = "eol",
+      max_comment_length = 80,
+      priority = 120,
+      kinds = {
+        comment = { sign_text = "C>", virtual_text_prefix = " Comment: " },
+        suggest = { sign_text = "S>", virtual_text_prefix = " Suggest: " },
+        delete = { sign_text = "D>", virtual_text_prefix = " Delete: " },
+        label = { sign_text = "L>", virtual_text_prefix = " Label: " },
+      },
+    },
+    labels = {
+      { id = "explain", title = "Explain", comment = "Please explain this more clearly." },
+      { id = "clarify", title = "Clarify", comment = "Please clarify this point." },
+      { id = "simplify", title = "Simplify", comment = "Please simplify this." },
+      { id = "tighten", title = "Tighten", comment = "Please tighten this up." },
+      { id = "expand", title = "Expand", comment = "Please expand on this." },
+    },
+    formatter = nil,
+    hooks = {
+      export = require("annotator").exporters.copy_to_clipboard,
+    },
+  })
+<
+
+Options:
+
+  mappings                    Set false to skip default mappings.
+  storage                     "memory" or "state".
+  storage_path                Optional path override for "state" storage.
+  display.sign_text           Sign column text for annotations.
+  display.sign_hl_group       Highlight group for signs.
+  display.virtual_text_prefix Prefix before annotation virtual text.
+  display.virtual_text_hl_group
+                              Highlight group for virtual text.
+  display.virtual_text_pos    Extmark virtual text position.
+  display.max_comment_length  Maximum comment preview length.
+  display.priority            Extmark priority.
+  display.kinds               Per-kind display overrides.
+  labels                      Label entries with id, title, and comment.
+  formatter                   Optional Markdown formatter function.
+  hooks.export                Function called by |:AnnotatorExport|.
+
+==============================================================================
+EXPORT HOOKS                                             *annotator-export-hooks*
+
+Override exported Markdown with formatter(ctx): >
+
+  require("annotator").setup({
+    formatter = function(ctx)
+      -- ctx.annotations contains typed annotations.
+      -- ctx.default_format(ctx.annotations) returns built-in Markdown.
+      return ctx.default_format(ctx.annotations)
+    end,
+  })
+<
+
+Provide hooks.export(ctx) to integrate with another workflow: >
+
+  require("annotator").setup({
+    hooks = {
+      export = function(ctx)
+        vim.fn.setreg("+", ctx.markdown)
+        ctx.clear_exported()
+        ctx.notify("Copied annotations", "info")
+      end,
+    },
+  })
+<
+
+The export context contains:
+
+  ctx.markdown                Rendered Markdown.
+  ctx.annotations             Pending annotation objects.
+  ctx.notify(message, kind)   Neovim notification helper.
+  ctx.clear_exported()        Clears exported annotations after success.
+
+If the hook does not call ctx.clear_exported(), annotations remain pending.
+
+==============================================================================
+LUA API                                                     *annotator-lua-api*
+
+>
+  local annotations = require("annotator")
+
+  annotations.setup(opts)
+  annotations.add()
+  annotations.add_visual()
+  annotations.suggest()
+  annotations.suggest_visual()
+  annotations.mark_delete()
+  annotations.mark_delete_visual()
+  annotations.label()
+  annotations.label_visual()
+  annotations.edit()
+  annotations.delete()
+  annotations.list()
+  annotations.render()
+  annotations.export()
+  annotations.clear()
+<
+
+==============================================================================
+LUA TYPES                                                 *annotator-lua-types*
+
+annotator.nvim includes LuaLS annotations for its public surface:
+
+  AnnotatorConfig
+  AnnotatorDisplayConfig
+  AnnotatorDisplayKindConfig
+  AnnotatorLabel
+  AnnotatorAnnotation
+  AnnotatorFormatterContext
+  AnnotatorExportContext
+  AnnotatorExporters
+
+Example: >
+
+  ---@type AnnotatorConfig
+  local opts = {
+    storage = "state",
+    labels = {
+      { id = "clarify", title = "Clarify", comment = "Please clarify this point." },
+    },
+  }
+
+  require("annotator").setup(opts)
+<
+
+==============================================================================
+HEALTH                                                       *annotator-health*
+
+Run: >
+
+  :checkhealth annotator
+<
+
+The health check verifies the Neovim version, input support, clipboard support
+for the default exporter, optional Snacks picker availability, and optional
+state directory writability.
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
