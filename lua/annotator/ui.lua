@@ -156,7 +156,8 @@ function M.annotations(items)
     return
   end
 
-  vim.fn.setqflist({}, "r", {
+  vim.fn.setqflist({}, " ", {
+    nr = "$",
     title = "Annotator Annotations",
     items = vim.tbl_map(function(annotation)
       return {
