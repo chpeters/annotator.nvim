@@ -156,14 +156,18 @@ function M.annotations(items)
     return
   end
 
-  vim.fn.setqflist(vim.tbl_map(function(annotation)
-    return {
-      filename = annotation.file_path,
-      lnum = annotation.start_line,
-      end_lnum = annotation.end_line,
-      text = annotation.comment,
-    }
-  end, items), "r")
+  vim.fn.setqflist({}, " ", {
+    nr = "$",
+    title = "Annotator Annotations",
+    items = vim.tbl_map(function(annotation)
+      return {
+        filename = annotation.file_path,
+        lnum = annotation.start_line,
+        end_lnum = annotation.end_line,
+        text = annotation.comment,
+      }
+    end, items),
+  })
   vim.cmd.copen()
 end
 
